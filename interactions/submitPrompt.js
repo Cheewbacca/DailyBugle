@@ -1,7 +1,7 @@
 const { client } = require("../discordSetup");
 const { mongo } = require("../mongoSetup");
-const { channelId } = require("../config.json");
-const { YESTERDAY, TODAY, BLOCKERS, BEAUTY_NAMES } = require("../constants");
+const { channelId, BEAUTY_NAMES } = require("../config.json");
+const { YESTERDAY, TODAY, BLOCKERS } = require("../constants");
 
 const submitPrompt = async (interaction) => {
   if (!interaction.isModalSubmit()) {

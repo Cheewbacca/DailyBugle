@@ -1,9 +1,6 @@
 const { client } = require("../discordSetup");
 const { mongo } = require("../mongoSetup");
-
-const MY_ACCOUNT = "458660764169928707";
-
-const USERS_TO_OBSERVE = ["andriikyslov", "anastasiarudenko"];
+const { MY_ACCOUNT, USERS_TO_OBSERVE } = require("../config.json");
 
 const sendReports = async () => {
   await mongo.connect();
