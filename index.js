@@ -19,11 +19,11 @@ client.on(Events.InteractionCreate, commonCommands);
 client.on(Events.InteractionCreate, submitPrompt);
 
 // Send reminder Monday-Friday at 12:00 (server time ?)
-const notificationJob = new cron.CronJob("00 00 12 * * 1-5", sendReminder);
+const notificationJob = new cron.CronJob("00 00 11 * * 1-5", sendReminder);
 notificationJob.start();
 
 // Send reports once per 2 weeks
-const reportsJob = new cron.CronJob("00 00 13 * * 1", sendReports);
+const reportsJob = new cron.CronJob("00 00 12 * * 1", sendReports);
 reportsJob.start();
 
 // Start bot
