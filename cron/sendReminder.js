@@ -1,5 +1,6 @@
 const { client } = require("../discordSetup");
 const { mongo } = require("../mongoSetup");
+const console = require("../logger");
 
 const sendReminder = async () => {
   await mongo.connect();
@@ -12,6 +13,7 @@ const sendReminder = async () => {
 
   userIds.map((id) => {
     client.users.fetch(id, false).then((user) => {
+      console.log(id, " received reminder");
       user.send("Reminder to send daily report");
     });
   });

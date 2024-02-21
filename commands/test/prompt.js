@@ -1,43 +1,85 @@
 const {
   ActionRowBuilder,
   ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
   SlashCommandBuilder,
 } = require("discord.js");
 const { YESTERDAY, TODAY, BLOCKERS } = require("../../constants");
+const { mongo } = require("../../mongoSetup");
+const { getBeautifiedValues, modalFieldBuilder } = require("../../helpers");
+const console = require("../../logger");
 
 const replyWithModalWindow = async (interaction) => {
   if (!interaction.isChatInputCommand()) {
     return;
   }
 
+  await mongo.connect().catch(() => {
+    console.error("Failed connection to db");
+    interaction.reply({
+      content: "Failed connection to db",
+    });
+  });
+
+  const db = await mongo.db("DailyBugle");
+
+  const userName = interaction.user.username;
+
+  console.log("Reply by ", userName);
+
+  const [lastDocument] = await db
+    .collection("reports")
+    .find({ name: userName })
+    .sort({ timestamp: -1 })
+    .limit(1)
+    .toArray();
+
+  const {
+    yesterday: yesterdayValue = [],
+    today: todayValue = [],
+    blockers: blockersValue = [],
+  } = lastDocument || {};
+
+  const beautifiedValues = getBeautifiedValues(
+    [yesterdayValue, todayValue, blockersValue],
+    true
+  );
+
   const modal = new ModalBuilder()
     .setCustomId("myModal")
     .setTitle("Daily report");
 
-  const yesterday = new TextInputBuilder()
-    .setCustomId(YESTERDAY)
-    .setLabel("What did I do yesterday")
-    .setStyle(TextInputStyle.Paragraph)
-    .setRequired(true);
+  const textFields = [
+    {
+      value: beautifiedValues[0],
+      id: YESTERDAY,
+      label: "What did I do yesterday",
+      required: true,
+    },
+    {
+      value: beautifiedValues[1],
+      id: TODAY,
+      label: "Plan for today",
+      required: true,
+    },
+    {
+      value: beautifiedValues[2],
+      id: BLOCKERS,
+      label: "Blockers",
+      required: false,
+    },
+  ];
 
-  const today = new TextInputBuilder()
-    .setCustomId(TODAY)
-    .setLabel("Plan for today")
-    .setStyle(TextInputStyle.Paragraph)
-    .setRequired(true);
+  const components = [];
 
-  const blockers = new TextInputBuilder()
-    .setCustomId(BLOCKERS)
-    .setLabel("Blockers")
-    .setStyle(TextInputStyle.Paragraph);
+  for (let i = 0; i < textFields.length; i++) {
+    components.push(
+      new ActionRowBuilder().addComponents(modalFieldBuilder(textFields[i]))
+    );
+  }
 
-  const firstActionRow = new ActionRowBuilder().addComponents(yesterday);
-  const secondActionRow = new ActionRowBuilder().addComponents(today);
-  const thirdActionRow = new ActionRowBuilder().addComponents(blockers);
+  modal.addComponents(...components);
 
-  modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
+  await mongo.close();
 
   await interaction.showModal(modal);
 };
